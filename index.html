@@ -20,7 +20,7 @@
         .btn-gold { display: inline-block; background: var(--gold); color: var(--black); padding: 18px; text-decoration: none; font-weight: 700; text-transform: uppercase; width: 100%; border: none; cursor: pointer; border-radius: 4px; }
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #EEE; border-radius: 4px; }
         
-        /* Tarjeta de Oferta Negra (Igual al pantallazo) */
+        /* Tarjeta de Oferta */
         .offer-card { background: #000; color: #fff; padding: 30px; border-radius: 8px; margin-top: 25px; border: 2px solid var(--gold); text-align: center; }
         .launch-badge { background: var(--gold); color: black; font-size: 11px; font-weight: 800; padding: 5px 15px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
         .old-price { text-decoration: line-through; opacity: 0.5; font-size: 18px; margin-bottom: 5px; }
@@ -42,24 +42,29 @@
 </section>
 
 <div class="test-container">
+    <!-- INICIO -->
     <div id="test-intro">
         <h2 style="font-family:'Playfair Display';">Auditoría Clínica</h2>
         <p style="margin: 20px 0;">Identifica tu tipo de piel y sus estados actuales para recibir tu plan de acción.</p>
         <button class="btn-gold" onclick="startTest()">Comenzar Auditoría</button>
     </div>
 
+    <!-- PREGUNTAS -->
     <div id="test-content" class="hidden">
         <div id="question-box"></div>
     </div>
 
+    <!-- DATOS -->
     <div id="lead-section" class="hidden">
         <h2 style="margin-bottom: 20px; font-family:'Playfair Display';">Registrar Datos</h2>
+        <p style="font-size: 13px; margin-bottom: 15px;">Para ver tu diagnóstico y recomendación científica:</p>
         <input type="text" id="user-name" placeholder="Nombre completo">
         <input type="email" id="user-email" placeholder="Correo electrónico">
         <input type="tel" id="user-phone" placeholder="WhatsApp (Ej: 3007372467)">
         <button class="btn-gold" onclick="processResults()">Generar Diagnóstico</button>
     </div>
 
+    <!-- RESULTADOS -->
     <div id="results-section" class="hidden">
         <div id="results-content"></div>
     </div>
@@ -68,7 +73,105 @@
 <footer>MERAK DERM • CIENCIA Y ESTÉTICA</footer>
 
 <script>
-    let scores = { seca: 0, normal: 0, mixta: 0, grasa: 0, des
+    let scores = { seca: 0, normal: 0, mixta: 0, grasa: 0, deshidratada: 0, sensible: 0 };
+    let current = 0;
+
+    const questions = [
+        { q: "¿Cómo se comporta tu piel respecto al brillo?", opts: [{t:"Opaca y áspera", v:"seca"}, {t:"Equilibrada", v:"normal"}, {t:"Brillo solo en Zona T", v:"mixta"}, {t:"Brillo en todo el rostro", v:"grasa"}] },
+        { q: "¿Cómo son tus poros?", opts: [{t:"Invisibles", v:"seca"}, {t:"Normales", v:"normal"}, {t:"Dilatados solo en nariz", v:"mixta"}, {t:"Dilatados en todo el rostro", v:"grasa"}] },
+        { q: "¿Cómo sientes la piel tras lavarla?", opts: [{t:"Muy tirante", v:"seca"}, {t:"Cómoda", v:"normal"}, {t:"Tirante solo en mejillas", v:"mixta"}, {t:"Grasosa rápido", v:"grasa"}] },
+        { q: "¿Sientes falta de elasticidad o líneas finas?", opts: [{t:"Sí, frecuentemente", v:"deshidratada"}, {t:"No", v:"normal"}] },
+        { q: "¿Tu piel se enrojece o arde con facilidad?", opts: [{t:"Sí, es reactiva", v:"sensible"}, {t:"Casi nunca", v:"normal"}] },
+        { q: "¿Presupuesto mensual para tu cuidado?", opts: [{t:"$60k - $90k", v:"P1"}, {t:"$90k - $150k", v:"P2"}, {t:"Más de $150k", v:"P3"}] }
+    ];
+
+    function startTest() {
+        document.getElementById('test-intro').classList.add('hidden');
+        document.getElementById('test-content').classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[current];
+        let html = `<h3 style="margin-bottom:25px; font-family:'Playfair Display';">${q.q}</h3>`;
+        q.opts.forEach(o => { 
+            html += `<div class="option" onclick="handleSelect('${o.v}')">${o.t}</div>`; 
+        });
+        document.getElementById('question-box').innerHTML = html;
+    }
+
+    function handleSelect(val) {
+        if (scores.hasOwnProperty(val)) {
+            scores[val]++;
+        }
+        
+        if (current < questions.length - 1) {
+            current++;
+            renderQuestion();
+        } else {
+            document.getElementById('test-content').classList.add('hidden');
+            document.getElementById('lead-section').classList.remove('hidden');
+        }
+    }
+
+    function processResults() {
+        const name = document.getElementById('user-name').value;
+        const phone = document.getElementById('user-phone').value;
+        const email = document.getElementById('user-email').value;
+
+        if(!name || !phone || !email) {
+            alert("Por favor completa todos los campos para generar tu diagnóstico.");
+            return;
+        }
+
+        // Calcular Ganador
+        let baseTypes = { seca: scores.seca, normal: scores.normal, mixta: scores.mixta, grasa: scores.grasa };
+        let winner = Object.keys(baseTypes).reduce((a, b) => baseTypes[a] > baseTypes[b] ? a : b);
+        
+        let diagnosis = "Piel " + winner.charAt(0).toUpperCase() + winner.slice(1);
+        if(scores.deshidratada > 0) diagnosis += " + Deshidratada";
+        if(scores.sensible > 0) diagnosis += " + Sensible";
+
+        let ofertaHTML = "";
+        
+        if (winner === "seca") {
+            ofertaHTML = `
+                <p style="margin:20px 0;">Tu perfil requiere una nutrición lipídica profunda. Estamos trabajando en una fórmula específica para piel seca.</p>
+                <a href="https://wa.me/573007372467?text=Hola! Mi diagnóstico es ${diagnosis}. Quiero entrar a la lista de espera." class="btn-gold">Lista de Espera Piel Seca</a>
+            `;
+        } else {
+            ofertaHTML = `
+                <div class="offer-card">
+                    <span class="launch-badge">OFERTA DE LANZAMIENTO LOTE 01</span>
+                    <h3 style="font-family:'Playfair Display'; margin-bottom:10px; color: #D4AF37;">Fórmula Multifuncional MERAK</h3>
+                    <p style="font-size:14px; opacity:0.9;">Hidratante + Nutritiva + Antioxidante en un solo paso científico.</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <div class="old-price">$120.000 COP</div>
+                        <div class="price-tag">$90.000 COP</div>
+                    </div>
+                    
+                    <ul class="feature-list">
+                        <li><strong>Fórmula 3 en 1:</strong> Hidratación, Nutrición y Antioxidantes.</li>
+                        <li>Simplifica tu rutina: Menos productos, más ciencia.</li>
+                        <li>Equilibra brillo, aporta luminosidad y previene el daño ambiental.</li>
+                        <li><strong>Regalo:</strong> Guía de Hábitos Sistémicos incluida.</li>
+                    </ul>
+                    
+                    <button class="btn-gold" onclick="window.open('https://wa.me/573007372467?text=Hola MERAK! Mi diagnóstico es ${diagnosis}. Quiero reservar la fórmula de lanzamiento ($90.000) de Hidratación, Nutrición y Antioxidantes.', '_blank')">RESERVAR CUPO PRIORITARIO</button>
+                    <p style="font-size:10px; margin-top:10px; opacity:0.6;">*Lote limitado en fase de pre-lanzamiento.</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('lead-section').classList.add('hidden');
+        document.getElementById('results-section').classList.remove('hidden');
+        document.getElementById('results-content').innerHTML = `
+            <h2 style="font-family:'Playfair Display'; color:var(--gold); margin-bottom:15px;">Diagnóstico: ${diagnosis}</h2>
+            <p style="font-size:15px; max-width: 500px; margin: 0 auto 20px auto;">Basado en tu auditoría, tu piel necesita un aporte equilibrado de nutrientes y antioxidantes para recuperar su vitalidad natural.</p>
+            ${ofertaHTML}
+        `;
+    }
 </script>
 </body>
 </html>
