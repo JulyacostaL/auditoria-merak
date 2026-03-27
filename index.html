@@ -61,7 +61,7 @@
         <input type="text" id="user-name" placeholder="Nombre completo">
         <input type="email" id="user-email" placeholder="Correo electrónico">
         <input type="tel" id="user-phone" placeholder="WhatsApp (Ej: 3007372467)">
-        <button class="btn-gold" onclick="processResults()">Generar Diagnóstico</button>
+        <button class="btn-gold" id="btn-submit" onclick="processResults()">Generar Diagnóstico</button>
     </div>
 
     <!-- RESULTADOS -->
@@ -114,14 +114,37 @@
         }
     }
 
-    function processResults() {
+    async function processResults() {
         const name = document.getElementById('user-name').value;
         const phone = document.getElementById('user-phone').value;
         const email = document.getElementById('user-email').value;
+        const btn = document.getElementById('btn-submit');
 
         if(!name || !phone || !email) {
             alert("Por favor completa todos los campos para generar tu diagnóstico.");
             return;
+        }
+
+        // Bloquear botón para evitar doble envío
+        btn.innerText = "Procesando...";
+        btn.disabled = true;
+
+        // GUARDAR EN GOOGLE SHEETS VIA SHEET.BEST
+        const SHEET_BEST_URL = "https://api.sheet.best/sheets/7d04f304-5b0e-4116-9564-f25e7b2c9834";
+        
+        try {
+            await fetch(SHEET_BEST_URL, {
+                method: "POST",
+                mode: "cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nombre: name,
+                    email: email,
+                    whatsapp: phone
+                })
+            });
+        } catch (error) {
+            console.error("Error al guardar en la base de datos", error);
         }
 
         // Calcular Ganador
